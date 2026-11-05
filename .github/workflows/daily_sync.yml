@@ -1,0 +1,20 @@
+name: Daily Stratos Options Sync
+on:
+  schedule:
+    - cron: '0 10 * * 1-5' # Runs automatically at 5:00 AM EST, Mon-Fri
+  workflow_dispatch:      # Allows you to click a button and force run it anytime
+jobs:
+  update-matrix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Fetch Market Levels
+        run: |
+          # Pulls option metrics directly from the data cloud tracker
+          curl -s "https://githubusercontent.com" > today_matrix.json
+      - name: Commit Data
+        run: |
+          git config --global user.name 'Stratos Automation'
+          git config --global user.email 'bot@stratos.internal'
+          git commit -am "Automated morning GEX matrix refresh" || exit 0
+          git push
