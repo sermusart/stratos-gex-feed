@@ -10,7 +10,7 @@ jobs:
       - uses: actions/checkout@v3
       - name: Fetch Market Levels
         run: |
-          # Pulls live data structures safely from the synchronized options root
+          # Pulls authentic, updated options matrix levels from the public tracking database
           curl -s "https://githubusercontent.com" > today_matrix.json
       - name: Commit Data
         run: |
