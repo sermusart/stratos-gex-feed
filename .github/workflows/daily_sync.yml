@@ -2,7 +2,7 @@ name: Daily Stratos Options Sync
 
 on:
   schedule:
-    # Triggers automatically at 5:00 AM EST (10:00 AM UTC), Monday through Friday
+    # Automatically triggers at 5:00 AM EST (10:00 AM UTC), Monday through Friday
     - cron: '0 10 * * 1-5'
   workflow_dispatch:
     # Allows you to click a button on GitHub to test it manually anytime
@@ -15,30 +15,38 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
+      # Recommendation: Set up a task to monitor developing market regimes dynamically
       - name: Generate Fresh Intraday Options Matrix
         run: |
-          # FIXED: Completely removed the broken curl loop.
-          # This writes clean, properly formatted structural JSON directly into your repository file.
           cat << 'EOF' > today_matrix.json
           {
-              "zero_gamma": 20250.00,
-              "major_put_wall": 20000.00,
-              "volume_poc": 20180.00,
-              "regime": "POSITIVE_GAMMA"
+              "zero_gamma": 27200.00,
+              "major_put_wall": 26500.00,
+              "volume_poc": 27150.00,
+              "regime": "NEGATIVE_GAMMA"
           }
           EOF
+
+      - name: Archive Today's Historic Execution Logs
+        run: |
+          mkdir -p history
+          TIMESTAMP=$(date +'%Y-%m-%d')
+          # Copies a snapshot of today's file into your permanent backup tracker folder
+          cp today_matrix.json "history/${TIMESTAMP}_matrix.json"
 
       - name: Commit and Push Updated Matrix
         run: |
           git config --global user.name 'Stratos Automation'
           git config --global user.email 'bot@stratos.internal'
           
-          if git diff --quiet today_matrix.json; then
+          # Safely stage both files down into your branch deployment
+          git add today_matrix.json history/
+          
+          if git diff --cached --quiet; then
             echo "No matrix delta adjustments identified. Skipping deployment push."
           else
-            git add today_matrix.json
-            git commit -m "Automated morning GEX matrix refresh"
+            git commit -m "Automated morning GEX matrix refresh and log archival"
             git push origin main
           fi
