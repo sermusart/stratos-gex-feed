@@ -1,20 +1,38 @@
 name: Daily Stratos Options Sync
+
 on:
   schedule:
-    - cron: '0 10 * * 1-5' # Runs automatically at 5:00 AM EST, Mon-Fri
-  workflow_dispatch:      # Allows you to click a button and force run it anytime
+    # Automatically triggers at 5:00 AM EST (10:00 AM UTC), Monday through Friday
+    - cron: '0 10 * * 1-5'
+  workflow_dispatch:
+    # Allows you to manually trigger a sync anytime by clicking a button on GitHub
+
+permissions:
+  # FIXED: Grants explicit write permissions so the runner can save your file metrics
+  contents: write
+
 jobs:
   update-matrix:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Fetch Market Levels
+      - name: Checkout Repository Code
+        uses: actions/checkout@v3
+
+      - name: Fetch Live Market Levels
         run: |
-          # Pulls authentic, updated options matrix levels from the public tracking database
+          # FIXED: Update this string with your absolute data api source provider endpoint
           curl -s "https://githubusercontent.com" > today_matrix.json
-      - name: Commit Data
+
+      - name: Commit and Push Updated Matrix
         run: |
           git config --global user.name 'Stratos Automation'
           git config --global user.email 'bot@stratos.internal'
-          git commit -am "Automated morning GEX matrix refresh" || exit 0
-          git push
+          
+          # Only proceed with a push deployment if numbers have actively shifted
+          if git diff --quiet today_matrix.json; then
+            echo "No matrix delta adjustments identified. Skipping deployment push."
+          else
+            git add today_matrix.json
+            git commit -m "Automated morning GEX matrix refresh"
+            git push origin main
+          fi
