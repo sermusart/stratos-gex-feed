@@ -1,0 +1,6 @@
+{
+    "zero_gamma": 27200.00,
+    "major_put_wall": 26500.00,
+    "volume_poc": 27150.00,
+    "regime": "NEGATIVE_GAMMA"
+}
